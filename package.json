@@ -15,7 +15,7 @@
     "seed": "node --env-file-if-exists=.env scripts/seed.mjs"
   },
   "dependencies": {
-    "@astrojs/netlify": "^6.5.13",
+    "@astrojs/netlify": "^8.2.6",
     "@astrojs/preact": "^6.0.5",
     "@supabase/supabase-js": "^2.117.2",
     "astro": "^7.3.5",
