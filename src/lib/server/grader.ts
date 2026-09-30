@@ -1,5 +1,4 @@
-import { callTool, GRADER_MODEL } from './anthropic';
-import { env } from './env';
+import { assertConfigured, callTool, graderModel } from './llm';
 import { heuristicGrade } from '../grading';
 
 const GRADER_SYSTEM = `You grade one short answer for ABL, a nightly practice system. Grade semantically: accept equivalent wording, synonyms, different but correct examples, and minor spelling or notation slips. Require the key idea — a vague answer that dodges the concept is not correct. An answer that is mostly right with a real conceptual error is not correct.
@@ -29,10 +28,11 @@ export async function gradeShortAnswer(opts: {
 }): Promise<{ correct: boolean; feedback: string }> {
   const answer = opts.answer.trim();
   if (answer.length < 1) return { correct: false, feedback: 'Nothing came through. Here is the missing piece.' };
-  if (!env('ANTHROPIC_API_KEY')) return heuristicGrade(answer, opts.acceptable);
+  // Misconfigured provider (e.g. ABL_PROVIDER=gemini with no GEMINI_API_KEY) is a loud 503, not a silent fallback.
+  assertConfigured();
   try {
     const out = await callTool<{ correct: boolean; feedback: string }>({
-      model: GRADER_MODEL(),
+      model: graderModel(),
       system: GRADER_SYSTEM,
       user: [
         `Grade level: ${opts.grade}. Subject: ${opts.subject}.`,

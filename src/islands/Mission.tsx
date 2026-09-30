@@ -4,6 +4,7 @@ import { useMe } from '../components/hooks';
 import Transmit from '../components/Transmit';
 import { Arrow, Check, Close } from '../components/Icons';
 import M from '../components/MathText';
+import { itemFitsSubject, misfitReason } from '../lib/subjects';
 import type { AnswerResult, Profile, PublicMission, SignalShort } from '../lib/types';
 
 type Step = { kind: 'q'; index: number } | { kind: 'short'; short: SignalShort } | { kind: 'bonus' };
@@ -45,16 +46,29 @@ export default function Mission({ id }: { id: string }) {
 }
 
 function Flight({ me, mission }: { me: Profile; mission: PublicMission }) {
+  // Subject lock at render time: an item that doesn't belong to this mission's subject is
+  // skipped (never shown under the wrong chip) and logged. Generation already filters; this is the backstop.
+  const fits = useMemo(() => {
+    const q = mission.questions.map((x) => itemFitsSubject(x, mission.subject));
+    const bonus = itemFitsSubject(mission.bonus, mission.subject);
+    mission.questions.forEach((x, i) => {
+      if (!q[i]) console.warn(`[abl] skipped Q${i + 1} in ${mission.id}: ${misfitReason(x, mission.subject)}`);
+    });
+    if (!bonus) console.warn(`[abl] skipped Deep Orbit in ${mission.id}: ${misfitReason(mission.bonus, mission.subject)}`);
+    return { q, bonus };
+  }, [mission]);
+  const shown = mission.questions.filter((_, i) => fits.q[i]);
+
   const steps = useMemo<Step[]>(() => {
     const out: Step[] = [];
     mission.questions.forEach((_, i) => {
-      out.push({ kind: 'q', index: i });
+      if (fits.q[i]) out.push({ kind: 'q', index: i });
       const s = mission.shorts.find((x) => x.afterQuestion === i + 1);
       if (s) out.push({ kind: 'short', short: s });
     });
-    out.push({ kind: 'bonus' });
+    if (fits.bonus) out.push({ kind: 'bonus' });
     return out;
-  }, [mission]);
+  }, [mission, fits]);
 
   const [answers, setAnswers] = useState<Record<string, AnswerResult>>(mission.answers ?? {});
   const pilot = mission.coach ? 'Dad' : mission.learnerName;
@@ -71,6 +85,7 @@ function Flight({ me, mission }: { me: Profile; mission: PublicMission }) {
   const debrief = () => go(`/app/debrief/${mission.id}`);
 
   useEffect(() => {
+    if (!shown.length) return;
     if (firstOpen === -1 || mission.completedAt) debrief();
   }, []);
 
@@ -82,8 +97,18 @@ function Flight({ me, mission }: { me: Profile; mission: PublicMission }) {
   };
   const record = (r: AnswerResult) => setAnswers((a) => ({ ...a, [r.questionId]: r }));
 
-  const qNumber = step.kind === 'q' ? step.index + 1 : null;
+  const qNumber = step?.kind === 'q' ? shown.indexOf(mission.questions[step.index]) + 1 : null;
   const back = me.role === 'parent' ? `/app/?crew=${mission.learnerName}` : '/app/';
+
+  if (!shown.length) {
+    return (
+      <div class="col stack" style="padding-top:10vh">
+        <p class="eyebrow">{mission.subject}</p>
+        <p class="notice warn">None of this mission’s items belong to {mission.subject}, so none will be shown. Generate a fresh one.</p>
+        <a class="btn" href={back}>Back</a>
+      </div>
+    );
+  }
 
   if (readOnly) {
     return (
@@ -102,13 +127,14 @@ function Flight({ me, mission }: { me: Profile; mission: PublicMission }) {
         <a class="icon-btn" href={back} aria-label="Leave mission (progress is saved)"><Close /></a>
         <div class="progress" aria-hidden="true">
           {mission.questions.map((q, i) => {
+            if (!fits.q[i]) return null;
             const r = answers[q.id];
             const now = step.kind === 'q' && step.index === i;
             return <span class={`dot ${r ? (r.correct ? 'right' : 'wrong') : ''} ${now && !r ? 'now' : ''}`} />;
           })}
-          <span class={`dot bonus ${answers[mission.bonus.id] ? (answers[mission.bonus.id].correct ? 'right' : 'wrong') : ''} ${step.kind === 'bonus' ? 'now' : ''}`} />
+          {fits.bonus && <span class={`dot bonus ${answers[mission.bonus.id] ? (answers[mission.bonus.id].correct ? 'right' : 'wrong') : ''} ${step.kind === 'bonus' ? 'now' : ''}`} />}
         </div>
-        <span class="m-count">{qNumber ? `${qNumber}/8` : step.kind === 'bonus' ? 'DEEP' : 'SIGNAL'}</span>
+        <span class="m-count">{qNumber ? `${qNumber}/${shown.length}` : step.kind === 'bonus' ? 'DEEP' : 'SIGNAL'}</span>
       </div>
 
       <div class="m-meta">

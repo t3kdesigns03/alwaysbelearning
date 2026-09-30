@@ -4,7 +4,7 @@
 //
 //   DAD_EMAIL=you@example.com DAD_PASSWORD='long-passphrase' npm run seed
 //
-// Needs PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (in .env or env).
+// Needs PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (from .env.local, .env, or the shell).
 // Creates/links three Supabase Auth users and their profiles:
 //   Dad   — your real email + password, role parent
 //   Booty — internal email (never typed), role learner, grade 11, pin_set = false
@@ -14,12 +14,17 @@
 import { createClient } from '@supabase/supabase-js';
 import { randomBytes } from 'node:crypto';
 
-const url = process.env.PUBLIC_SUPABASE_URL;
-const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const dadEmail = process.env.DAD_EMAIL;
-const dadPassword = process.env.DAD_PASSWORD;
-const bootyEmail = process.env.BOOTY_EMAIL || 'booty@abl.local';
-const joEmail = process.env.JO_EMAIL || 'jo@abl.local';
+// PASTE_… placeholders from .env.local count as unset.
+const val = (name) => {
+  const v = process.env[name]?.trim();
+  return v && !/^PASTE_[A-Z0-9_]*$/.test(v) ? v : undefined;
+};
+const url = val('PUBLIC_SUPABASE_URL');
+const key = val('SUPABASE_SERVICE_ROLE_KEY');
+const dadEmail = val('DAD_EMAIL');
+const dadPassword = val('DAD_PASSWORD');
+const bootyEmail = val('BOOTY_EMAIL') || 'booty@abl.local';
+const joEmail = val('JO_EMAIL') || 'jo@abl.local';
 
 if (!url || !key) {
   console.error('✗ Set PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (see .env.example).');

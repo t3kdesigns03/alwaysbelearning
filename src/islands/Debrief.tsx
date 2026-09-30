@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { api, type LearnerName } from '../lib/api';
 import { debriefLine, nextRank, RANKS } from '../lib/scoring';
+import { onEightScale } from '../lib/grading';
 import { useMe } from '../components/hooks';
 import TopBar from '../components/TopBar';
 import Transmit from '../components/Transmit';
@@ -31,6 +32,7 @@ export default function Debrief({ id }: { id: string }) {
 function View({ me, d }: { me: Profile; d: D }) {
   const board = d.learnerName as LearnerName;
   const cq = me.role === 'parent' ? `?crew=${board}` : '';
+  const eight = onEightScale(d.score, d.outOf);
   const up = d.difficultyAfter > d.difficultyBefore;
   const down = d.difficultyAfter < d.difficultyBefore;
   const nr = nextRank(d.stat?.points ?? 0);
@@ -43,12 +45,12 @@ function View({ me, d }: { me: Profile; d: D }) {
       <p class="muted" style="margin-top:6px">{d.topic}</p>
 
       <section style="margin-top:26px">
-        <div class="score-hero" aria-label={`${d.score} out of 8`}>
-          <span class="num">{d.score}</span><span class="of">/8</span>
+        <div class="score-hero" aria-label={`${d.score} out of ${d.outOf}`}>
+          <span class="num">{d.score}</span><span class="of">/{d.outOf}</span>
         </div>
-        <p class="verdict" style="margin-top:18px">{debriefLine(d.score)}</p>
-        {d.score === 8 && up && <p class="muted" style="margin-top:10px">Clean sweep means we went soft. The next {d.subject} mission comes in hotter.</p>}
-        {d.score <= 4 && <p class="muted" style="margin-top:10px">Warmer scaffolds next time — same topic, same rigor underneath.</p>}
+        <p class="verdict" style="margin-top:18px">{debriefLine(eight)}</p>
+        {eight === 8 && up && <p class="muted" style="margin-top:10px">Clean sweep means we went soft. The next {d.subject} mission comes in hotter.</p>}
+        {eight <= 4 && <p class="muted" style="margin-top:10px">Warmer scaffolds next time — same topic, same rigor underneath.</p>}
       </section>
 
       <section class="stat-row" style="margin-top:28px">
@@ -73,7 +75,7 @@ function View({ me, d }: { me: Profile; d: D }) {
       <section class="glass pad" style="margin-top:12px">
         <div class="spread">
           <a class="chip fresh" href={`/app/board${cq}`} style="animation-delay:400ms">
-            {d.subject}<span class="c-score">{d.coach ? `${d.score}/8` : `${d.stat?.lastScore ?? d.score}/8`}</span>
+            {d.subject}<span class="c-score">{d.coach ? `${d.score}/${d.outOf}` : `${d.stat?.lastScore ?? eight}/8`}</span>
           </a>
           <span class="faint mono" style="font-size:var(--fs-xs)">
             {d.coach ? 'Coach run · board unchanged' : up ? 'Board updated · hotter next' : down ? 'Board updated · warmer next' : 'Board updated'}
@@ -103,7 +105,7 @@ function View({ me, d }: { me: Profile; d: D }) {
       )}
 
       <section class="stack" style="--stack:10px;margin-top:30px">
-        <a class="btn btn-primary block" href={again}>{d.score === 8 ? 'Go further' : 'Fly it again'} <Arrow /></a>
+        <a class="btn btn-primary block" href={again}>{eight === 8 ? 'Go further' : 'Fly it again'} <Arrow /></a>
         <div class="row" style="gap:10px">
           <a class="btn grow" href={`/app/${cq}`}>Mission Control</a>
           <a class="btn grow" href={`/app/board${cq}`}>Board</a>

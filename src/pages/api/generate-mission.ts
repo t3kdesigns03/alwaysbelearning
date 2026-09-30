@@ -1,6 +1,7 @@
 import { adminClient, requireUser, resolveLearner } from '../../lib/server/supabase';
 import { handle, json, readJson, HttpError } from '../../lib/server/env';
 import { generateMission } from '../../lib/server/generator';
+import { assertConfigured } from '../../lib/server/llm';
 import { toPublicMission } from '../../lib/grading';
 import { parseTopic } from '../../lib/courses';
 import { clampDifficulty, DEFAULT_DIFFICULTY } from '../../lib/scoring';
@@ -12,6 +13,7 @@ const DAILY_CAP = 15; // per learner per rolling 24 h — protects the Anthropic
 
 export const POST = handle(async (req) => {
   const caller = await requireUser(req);
+  assertConfigured(); // fail fast (503) if the chosen AI provider has no key
   const body = await readJson<{ subject?: string; topic?: string; note?: string; learnerName?: string; learnerId?: string }>(req);
   const learner = await resolveLearner(caller, body.learnerName);
   if (body.learnerId && body.learnerId !== learner.id) throw new HttpError(400, 'Learner mismatch.');

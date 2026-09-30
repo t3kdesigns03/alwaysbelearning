@@ -1,23 +1,8 @@
-import { env, requireEnv, HttpError } from './env';
+// Anthropic Messages API adapter: one forced tool call → the tool's input object.
+import { requireEnv, HttpError } from '../env';
+import type { CallToolOpts } from './types';
 
-export const GENERATION_MODEL = () => env('ANTHROPIC_MODEL') ?? 'claude-sonnet-4-5';
-export const GRADER_MODEL = () => env('ANTHROPIC_GRADER_MODEL') ?? 'claude-haiku-4-5';
-
-type Tool = { name: string; description: string; input_schema: Record<string, unknown> };
-
-/**
- * One forced tool call → the tool's input object. Using a tool with a JSON
- * schema is the most reliable way to get JSON-only output from the Messages API.
- */
-export async function callTool<T = unknown>(opts: {
-  model: string;
-  system: string;
-  user: string;
-  tool: Tool;
-  maxTokens: number;
-  timeoutMs: number;
-  temperature?: number;
-}): Promise<T> {
+export async function anthropicCallTool<T = unknown>(opts: CallToolOpts): Promise<T> {
   const key = requireEnv('ANTHROPIC_API_KEY');
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), opts.timeoutMs);
@@ -44,6 +29,7 @@ export async function callTool<T = unknown>(opts: {
       const body = await res.text().catch(() => '');
       console.error('[abl] anthropic', res.status, body.slice(0, 300));
       if (res.status === 401) throw new HttpError(503, 'The Anthropic key was rejected. Check ANTHROPIC_API_KEY.');
+      if (res.status === 404) throw new HttpError(503, `Anthropic doesn't know the model "${opts.model}". Check ANTHROPIC_MODEL / ANTHROPIC_GRADER_MODEL.`);
       if (res.status === 429 || res.status === 529) throw new HttpError(503, 'The generator is busy. Give it a minute and try again.');
       throw new HttpError(502, 'The generator did not answer cleanly. Try again.');
     }

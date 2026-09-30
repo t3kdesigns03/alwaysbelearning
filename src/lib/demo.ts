@@ -9,8 +9,8 @@ import { ApiError } from './errors';
 import type { AnswerResult, Course, CrewName, Debrief, MissionPayload, Profile, SubjectStat } from './types';
 import { DEFAULT_COURSES, GRADE_FOR, parseTopic } from './courses';
 import { COOLDOWN_MS, MAX_ATTEMPTS, pinProblem } from './pin';
-import { pickSample } from './samples';
-import { acceptableFor, buildResult, findItem, heuristicGrade, toPublicMission } from './grading';
+import { drawSampleMission } from './samples';
+import { acceptableFor, buildResult, findItem, heuristicGrade, onEightScale, scoredItems, toPublicMission } from './grading';
 import { chicagoDay, DEFAULT_DIFFICULTY, missionPoints, nextDifficulty, nextStreak, rankFor, clampDifficulty } from './scoring';
 
 const KEY = 'abl-demo-v1';
@@ -249,9 +249,19 @@ export const demoBackend: Backend = {
     const grade = GRADE_FOR[learnerName];
     const parsed = parseTopic(topic);
     const difficulty = clampDifficulty(s.stats[learnerName][subject]?.difficulty ?? DEFAULT_DIFFICULTY);
-    const { sample, exact } = pickSample(subject, parsed.title, grade);
+    // Subject is a lock: draw only from this subject's bank. Never borrow another subject's items.
+    const drawn = drawSampleMission(subject, parsed.title, grade);
+    if (!drawn) {
+      throw new ApiError(
+        `The demo bank has no ${subject} transmissions yet. Live mode generates any subject — or pick a subject with a demo bank.`,
+        422,
+        { reason: 'no_subject_bank' },
+      );
+    }
+    if (drawn.dropped.length) console.warn('[abl] demo: dropped off-subject items', subject, drawn.dropped);
+    const { sample, exact } = drawn;
     await wait(2600); // let the transmission animation breathe
-    const { key: _k, match: _m, subject: sampleSubject, unit: _u, lesson: _l, ...rest } = sample;
+    const { key: _k, match: _m, subject: _sampleSubject, unit: _u, lesson: _l, ...rest } = sample;
     const payload: MissionPayload = {
       ...structuredClone(rest),
       subject,
@@ -263,7 +273,7 @@ export const demoBackend: Backend = {
     const id = uuid();
     const demoNote = exact
       ? 'Demo mode · sample transmission. Connect Supabase + Anthropic and every mission is generated fresh from what she typed.'
-      : `Demo mode · no sample for “${parsed.title}” yet, so this is the ${sampleSubject} sample. Live mode generates from the exact topic.`;
+      : `Demo mode · no ${subject} sample for “${parsed.title}” yet, so this is another ${subject} sample. Live mode generates from the exact topic.`;
     s.missions.push({
       id, learner: learnerName, flownBy: me, payload, answers: {}, createdAt: new Date().toISOString(),
       completedAt: null, score: null, bonusCorrect: null, demoNote,
@@ -326,12 +336,15 @@ export const demoBackend: Backend = {
     const coach = m.flownBy !== m.learner;
     const stats = s.stats[m.learner];
     const before = m.payload.difficulty;
+    const counted = scoredItems(m.payload);
+    const outOf = counted.questions.length;
 
     if (!m.completedAt) {
-      const open = m.payload.questions.filter((q) => !m.answers[q.id]).length + (m.answers[m.payload.bonus.id] ? 0 : 1);
+      const open = counted.questions.filter((q) => !m.answers[q.id]).length + (counted.bonus && !m.answers[counted.bonus.id] ? 1 : 0);
       if (open) throw new ApiError(`${open} item${open === 1 ? '' : 's'} still open.`, 409);
-      const score = m.payload.questions.filter((q) => m.answers[q.id]?.correct).length;
-      const bonusCorrect = Boolean(m.answers[m.payload.bonus.id]?.correct);
+      const score = counted.questions.filter((q) => m.answers[q.id]?.correct).length;
+      const bonusCorrect = Boolean(counted.bonus && m.answers[counted.bonus.id]?.correct);
+      const eight = onEightScale(score, outOf);
       m.score = score;
       m.bonusCorrect = bonusCorrect;
       m.completedAt = new Date().toISOString();
@@ -340,12 +353,12 @@ export const demoBackend: Backend = {
         const today = chicagoDay();
         const next: SubjectStat = {
           subject: m.payload.subject,
-          difficulty: nextDifficulty(score, prev?.difficulty ?? before),
+          difficulty: nextDifficulty(eight, prev?.difficulty ?? before),
           missions: (prev?.missions ?? 0) + 1,
-          lastScore: score,
-          bestScore: Math.max(prev?.bestScore ?? 0, score),
+          lastScore: eight,
+          bestScore: Math.max(prev?.bestScore ?? 0, eight),
           streak: nextStreak(prev?.streak ?? 0, prev?.lastFlownOn ?? null, today),
-          points: (prev?.points ?? 0) + missionPoints(score, bonusCorrect, before),
+          points: (prev?.points ?? 0) + missionPoints(eight, bonusCorrect, before),
           lastFlownOn: today,
           updatedAt: new Date().toISOString(),
         };
@@ -365,12 +378,13 @@ export const demoBackend: Backend = {
       subject: m.payload.subject,
       topic: m.payload.topic,
       score: m.score ?? 0,
+      outOf,
       bonusCorrect: Boolean(m.bonusCorrect),
       difficultyBefore: before,
       difficultyAfter: m.difficultyAfter ?? before,
       stat,
       rank: rankFor(stat?.points ?? 0),
-      missed: m.payload.questions
+      missed: counted.questions
         .filter((q) => !m.answers[q.id]?.correct)
         .map((q) => ({ prompt: q.prompt, concept: q.concept, why: q.why })),
     };

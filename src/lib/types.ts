@@ -132,6 +132,8 @@ export type Debrief = {
   subject: string;
   topic: string;
   score: number;
+  /** Items that counted (8 unless an older mission had off-subject items skipped). */
+  outOf: number;
   bonusCorrect: boolean;
   difficultyBefore: number;
   difficultyAfter: number;

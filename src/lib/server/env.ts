@@ -11,15 +11,24 @@ try {
     ANTHROPIC_API_KEY: import.meta.env.ANTHROPIC_API_KEY,
     ANTHROPIC_MODEL: import.meta.env.ANTHROPIC_MODEL,
     ANTHROPIC_GRADER_MODEL: import.meta.env.ANTHROPIC_GRADER_MODEL,
+    ABL_PROVIDER: import.meta.env.ABL_PROVIDER,
+    GEMINI_API_KEY: import.meta.env.GEMINI_API_KEY,
+    GEMINI_MODEL: import.meta.env.GEMINI_MODEL,
+    GEMINI_GRADER_MODEL: import.meta.env.GEMINI_GRADER_MODEL,
   };
 } catch {
   /* running outside Vite (scripts/tests) */
 }
 
+/** `.env.local` ships with `PASTE_…` placeholders; treat those exactly like a missing value. */
+export function isPlaceholder(v: string | undefined | null): boolean {
+  return !v || !v.trim() || /^PASTE_[A-Z0-9_]*$/.test(v.trim());
+}
+
 export function env(name: string): string | undefined {
   const fromProcess = typeof process !== 'undefined' ? process.env?.[name] : undefined;
   const v = fromProcess || viteEnv[name];
-  return v && v.trim() ? v.trim() : undefined;
+  return isPlaceholder(v) ? undefined : v!.trim();
 }
 
 export function requireEnv(name: string): string {

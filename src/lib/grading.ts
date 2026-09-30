@@ -1,5 +1,6 @@
 // Shared grading helpers (server + local demo mode).
 import type { AnswerResult, MissionPayload, PublicMission, CrewName } from './types';
+import { itemFitsSubject } from './subjects';
 
 const STOP = new Set(
   'a an the of to and or is are was were be it its this that in on for with as by at from so because which into than then their her his she he they you your can will would'.split(' '),
@@ -97,4 +98,21 @@ export function buildResult(
     fact: found.kind === 'bonus' ? found.item.fact : undefined,
     modelAnswer: modelAnswerFor(item),
   };
+}
+
+/**
+ * The items that count: only those that pass the subject lock. A mission built
+ * after the lock always has all 8 + 1; older missions may carry off-subject items,
+ * which are skipped at render and not scored.
+ */
+export function scoredItems(p: MissionPayload) {
+  return {
+    questions: p.questions.filter((q) => itemFitsSubject(q, p.subject)),
+    bonus: itemFitsSubject(p.bonus, p.subject) ? p.bonus : null,
+  };
+}
+
+/** Put a score on the /8 scale that difficulty, points and debrief copy expect. */
+export function onEightScale(score: number, outOf: number): number {
+  return outOf >= 8 || outOf <= 0 ? score : Math.round((score * 8) / outOf);
 }

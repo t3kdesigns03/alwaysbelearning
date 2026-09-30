@@ -5,6 +5,7 @@
 // quality bar the generator is held to.
 // ─────────────────────────────────────────────────────────────
 import type { MissionPayload } from './types';
+import { itemFitsSubject } from './subjects';
 
 type Sample = Omit<MissionPayload, 'difficulty' | 'topic' | 'subject' | 'unit' | 'lesson'> & {
   key: string;
@@ -612,15 +613,170 @@ export const SAMPLES: Sample[] = [
       topicLabel: 'Distance on a number line',
     },
   },
+
+  // ── JO · Physical Education · fitness, rules, safety, sportsmanship ──
+  {
+    key: 'pe7-fitness',
+    subject: 'Physical Education',
+    match: /warm|stretch|heart|fitness|sport|game|team|basket|soccer|volley|rule|safety|heat|train|overload|drill|sportsman|endurance|sprint|run/i,
+    grade: 7,
+    questions: [
+      {
+        id: 'q1', type: 'mc', prompt: 'What is the main job of a warm-up before a game or workout?',
+        choices: [
+          'Tire your muscles out so you feel calmer',
+          'Gradually raise your heart rate and body temperature so your muscles are ready to work',
+          'Hold the deepest stretch you can while your muscles are still cold',
+          'Replace the need to drink water during practice',
+        ],
+        correctIndex: 1,
+        concept: 'Purpose of a warm-up',
+        why: 'A warm-up eases the body from rest to effort: heart rate climbs, muscles warm up and move more easily, and injury risk drops. Deep stretching on cold muscles is the common mix-up — warm first, then stretch.',
+        stretch: 'Next rung: why do dynamic moves (leg swings, high knees) usually beat long static holds before a sprint?',
+      },
+      {
+        id: 'q2', type: 'mc', prompt: 'In basketball, a player takes several steps while holding the ball without dribbling. What is the call?',
+        choices: ['Double dribble', 'Charging', 'Traveling', 'Goaltending'],
+        correctIndex: 2,
+        concept: 'Rules of the game',
+        why: 'Moving your feet too many times while holding the ball is traveling. A double dribble is dribbling again after stopping; charging is running into a defender who has set position.',
+        stretch: 'Next rung: what is a pivot foot, and how does it let you move without traveling?',
+      },
+      {
+        id: 'q3', type: 'mc', prompt: 'A common estimate of max heart rate is 220 minus your age. For a 12-year-old, which is about 60–80% of that — a solid workout zone?',
+        choices: ['About 60–80 beats per minute', 'About 125–166 beats per minute', 'About 150–200 beats per minute', 'About 208–220 beats per minute'],
+        correctIndex: 1,
+        concept: 'Target heart rate zone',
+        why: 'Estimated max = 220 − 12 = 208 beats per minute. 60% of 208 is about 125 and 80% is about 166, so the workout zone is roughly 125–166. The first option mixes up percent with beats; the last is max effort, not a zone you hold.',
+        stretch: 'Next rung: take your pulse for 15 seconds right after a lap and multiply by 4 — are you in the zone?',
+      },
+      {
+        id: 'q4', type: 'short',
+        prompt: 'A teammate makes a mistake that costs your team a point. Name one thing a good teammate does next, and why it helps the team.',
+        acceptable: [
+          'Encourage them and say "next play" so they refocus instead of getting down on themselves.',
+          'Stay positive and support them, because a teammate who feels supported plays better and the team stays together.',
+          'Help them reset — high five, move on — since blaming makes the whole team play worse.',
+        ],
+        concept: 'Sportsmanship and teamwork',
+        why: 'Mistakes happen in every game. Quick support (“next play”) keeps the teammate focused and keeps the team working together. Blame or eye-rolling spreads frustration and usually leads to more mistakes.',
+        stretch: 'Next rung: how can a team captain help the whole team bounce back after a bad quarter?',
+      },
+      {
+        id: 'q5', type: 'mc', prompt: 'Training is specific: you get better at what you practice. A soccer player keeps fading in the second half. Which plan fits best?',
+        choices: [
+          'Max-weight bench press, nothing else',
+          'Interval runs that copy a match — sprints mixed with jogging — a few times a week',
+          'Stretching only',
+          'Resting all week before every game',
+        ],
+        correctIndex: 1,
+        concept: 'Training specificity',
+        why: 'Soccer is repeated sprints with jogging in between, so intervals build exactly the endurance she is missing. Bench press trains upper-body strength, and stretching trains flexibility — useful, but not for second-half fade.',
+        stretch: 'Next rung: design a 20-minute interval drill for a soccer practice.',
+      },
+      {
+        id: 'q6', type: 'mc', prompt: 'Maya holds a deep static stretch for 60 seconds right before a sprint race and says it is the best warm-up. What is the problem?',
+        choices: [
+          'Nothing — long static stretches are always the best pre-sprint warm-up',
+          'Long static holds right before sprinting can briefly reduce power; a dynamic warm-up works better first',
+          'She should hold the stretch for five minutes instead',
+          'Stretching should never be part of a workout',
+        ],
+        correctIndex: 1,
+        concept: 'Find the error: warm-up choice',
+        why: 'Long static holds just before explosive efforts can temporarily reduce power. Jogging plus dynamic moves prepares muscles for speed. Static stretching still has a place — during the cool-down.',
+        stretch: 'Next rung: put these in order for sprint day — jog, dynamic drills, race, cool-down, static stretch.',
+      },
+      {
+        id: 'q7', type: 'mc', prompt: 'Overload principle: to get stronger, muscles must work a little harder than they are used to. Which is a safe way to use it?',
+        choices: [
+          'Double the weight every workout',
+          'Push through sharp pain so the muscle adapts',
+          'Add a few reps or a little weight each week while keeping good form',
+          'Keep the same easy workout forever',
+        ],
+        correctIndex: 2,
+        concept: 'Progressive overload',
+        why: 'Small, steady increases with good form let muscles adapt safely. Doubling the load or training through sharp pain invites injury; never increasing means no progress.',
+        stretch: 'Next rung: overload works for endurance too — how would you apply it to a mile run?',
+      },
+      {
+        id: 'q8', type: 'short',
+        prompt: 'It is a hot, humid August football practice in Iowa. Name two things that lower the risk of heat illness.',
+        acceptable: [
+          'Drink water before, during and after practice, and take breaks in the shade.',
+          'Hydrate often and wear light, loose clothing.',
+          'Get used to the heat gradually and tell a coach right away if you feel dizzy or have cramps.',
+        ],
+        concept: 'Heat safety',
+        why: 'Water replaces what sweat takes out, and shade and rest breaks let the body cool down. Light clothing and easing into hot-weather practice help too. Dizziness, headache or cramps mean stop and tell a coach.',
+        stretch: 'Next rung: why is humid heat harder on the body than dry heat at the same temperature?',
+      },
+    ],
+    shorts: [
+      { id: 's1', afterQuestion: 2, tag: 'Did you know · Resting heart rate', related: true, text: 'Well-trained endurance athletes can have resting heart rates in the 40s. For most people, a resting rate of about 60–100 beats per minute is normal.' },
+      { id: 's2', afterQuestion: 4, tag: 'Signal burst · Pickleball', related: false, text: 'Pickleball was invented in 1965 on Bainbridge Island, Washington — and has been one of the fastest-growing sports in the U.S. in recent years.' },
+      { id: 's3', afterQuestion: 6, tag: 'One orbit over · Octopus', related: false, text: 'An octopus has three hearts and blue blood. Its blood carries oxygen with a copper-based protein instead of the iron-based one ours uses.' },
+    ],
+    bonus: {
+      id: 'bonus', type: 'mc',
+      prompt: 'Sprinter Usain Bolt ran 100 m in 9.58 seconds in 2009. About how fast was he at top speed during that race?',
+      choices: ['About 15 mph', 'About 27 mph', 'About 45 mph', 'About 60 mph'],
+      correctIndex: 1,
+      acceptable: ['about 27 mph', 'around 44 km/h', 'about 12 meters per second at top speed'],
+      fact: 'Bolt averaged about 10.4 m/s over the whole race but hit roughly 12.4 m/s (about 27–28 mph) between 60 and 80 m. Sprinters don’t hold top speed to the finish — races are often won by whoever slows down least.',
+      why: 'His average for the full race was about 23 mph, but that includes the start from zero. At full speed in the middle of the race he was near 27–28 mph. 45 and 60 mph are car speeds, not human sprint speeds.',
+      topicLabel: 'Sprint speed and pacing',
+    },
+  },
 ];
 
-/** Demo mode: find the closest sample for what she typed. */
-export function pickSample(subject: string, topic: string, grade: 7 | 11): { sample: Sample; exact: boolean } {
-  const forGrade = SAMPLES.filter((s) => s.grade === grade);
-  const exact = forGrade.find((s) => s.subject === subject && s.match.test(topic));
-  if (exact) return { sample: exact, exact: true };
-  const bySubject = forGrade.find((s) => s.subject === subject);
-  if (bySubject) return { sample: bySubject, exact: false };
-  const byTopic = forGrade.find((s) => s.match.test(topic));
-  return { sample: byTopic ?? forGrade[0], exact: false };
+/**
+ * Demo mode: draw a mission from the bank for EXACTLY this subject.
+ * Every item passes itemFitsSubject; a misfit is dropped and redrawn from another
+ * sample of the same subject. If the bank can't fill all 8 + 1, return null —
+ * the caller refuses. Nothing is ever relabeled into another subject.
+ */
+export function drawSampleMission(
+  subject: string,
+  topic: string,
+  grade: 7 | 11,
+  rand: () => number = Math.random,
+): { sample: Sample; exact: boolean; dropped: string[] } | null {
+  const pool = SAMPLES.filter((s) => s.grade === grade && s.subject === subject);
+  if (!pool.length) return null;
+  const primary = pool.find((s) => s.match.test(topic)) ?? pool[Math.floor(rand() * pool.length)];
+  const spares = pool.filter((s) => s !== primary);
+  const used = new Set<string>();
+  const dropped: string[] = [];
+
+  const questions = [];
+  for (const q of primary.questions) {
+    if (itemFitsSubject(q, subject)) {
+      questions.push(q);
+      continue;
+    }
+    dropped.push(`${primary.key}:${q.id}`);
+    const spare = spares
+      .flatMap((s) => s.questions.map((x) => ({ s, x })))
+      .find(({ s, x }) => x.type === q.type && !used.has(`${s.key}:${x.id}`) && itemFitsSubject(x, subject));
+    if (!spare) return null;
+    used.add(`${spare.s.key}:${spare.x.id}`);
+    questions.push(spare.x);
+  }
+
+  let bonus = primary.bonus;
+  if (!itemFitsSubject(bonus, subject)) {
+    dropped.push(`${primary.key}:bonus`);
+    const alt = spares.map((s) => s.bonus).find((b) => itemFitsSubject(b, subject));
+    if (!alt) return null;
+    bonus = alt;
+  }
+
+  return {
+    sample: { ...primary, questions: questions.map((q, i) => ({ ...q, id: `q${i + 1}` })), bonus: { ...bonus, id: 'bonus' } },
+    exact: primary.match.test(topic),
+    dropped,
+  };
 }

@@ -6,9 +6,10 @@
 // ─────────────────────────────────────────────────────────────
 import { randomInt } from 'node:crypto';
 import { z } from 'zod';
-import { callTool, GENERATION_MODEL } from './anthropic';
+import { callTool, generationModel } from './llm';
 import { HttpError } from './env';
 import { contextFor, type ParsedTopic } from '../courses';
+import { itemFitsSubject, misfitReason, subjectLockLine } from '../subjects';
 import type { Difficulty, Grade, MissionPayload, MissionQuestion, SignalShort } from '../types';
 
 export type GenerateInput = {
@@ -29,6 +30,7 @@ THE JOB
 The learner already did today's lesson. Lock today's idea, then push past it the same night. Comfortable is the failure state. Confused-for-ten-seconds-then-taught is the win.
 
 NON-NEGOTIABLES
+- The subject is a lock, not a label. Every item (and the Deep Orbit) must belong on that subject's quiz. A PE mission never gets a moon, a fraction drill, or a president; a math mission stays math; a science mission stays science. If the typed topic seems to belong to another subject, write the closest real item FOR THE CHOSEN SUBJECT.
 - Honor the typed unit/lesson title. It is the source of truth. Write questions that actually test that lesson — never generic "what is algebra" filler.
 - Original questions only — no copied test-bank items, no copyrighted passages.
 - JSON only, via the provided tool, in the MissionPayload shape.
@@ -214,6 +216,7 @@ function briefing(inp: GenerateInput): string {
     ctx ? `COURSE NOW (fall 2026): ${ctx.now.join('; ')}` : `COURSE: not in the standard list — stay tightly on the typed topic at grade ${inp.grade}.`,
     ctx ? `COURSE NEXT: ${ctx.next.join('; ')}` : '',
     ctx?.guardrails ? `GUARDRAILS: ${ctx.guardrails}` : '',
+    subjectLockLine(inp.subject),
     inp.recentTopics.length ? `RECENT MISSIONS IN THIS SUBJECT (don't repeat the same items): ${inp.recentTopics.join(' | ')}` : '',
     `DATE: ${new Date().toLocaleDateString('en-US', { timeZone: 'America/Chicago', dateStyle: 'long' })}. Questions must feel like this week and next week, not a 2019 review packet.`,
     inp.subject === 'Algebra 2 A' && /polynomial multiplication/i.test(inp.topic.title) && inp.difficulty >= 4
@@ -249,13 +252,13 @@ async function runPart<T>(
   const schema = which === 'A' ? PartA : PartB;
   const base = `${briefing(inp)}\n\n${which === 'A' ? PART_A_ASK : PART_B_ASK}`;
   let lastErr = '';
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (let attempt = 0; attempt < 3; attempt++) {
     const elapsed = Date.now() - started;
-    if (attempt > 0 && elapsed > 14_000) break; // no time for a second pass inside the function budget
+    if (attempt > 0 && elapsed > 14_000) break; // no time for another pass inside the function budget
     const user = attempt === 0 ? base : `${base}\n\nYour previous attempt failed validation: ${lastErr}. Fix it exactly.`;
     try {
       const raw = await callTool<unknown>({
-        model: GENERATION_MODEL(),
+        model: generationModel(),
         system: SYSTEM,
         user,
         tool,
@@ -270,6 +273,20 @@ async function runPart<T>(
       const typeErr = checkTypes((parsed.data as { questions: Array<{ type: string }> }).questions);
       if (typeErr) {
         lastErr = typeErr;
+        continue;
+      }
+      // Subject lock: an off-subject item is dropped and regenerated — never relabeled.
+      const offset = which === 'A' ? 0 : 4;
+      const items: Array<{ label: string; item: Parameters<typeof itemFitsSubject>[0] }> = [
+        ...(parsed.data as { questions: Array<Parameters<typeof itemFitsSubject>[0]> }).questions.map((q, i) => ({ label: `Q${offset + i + 1}`, item: q })),
+        ...(which === 'B' ? [{ label: 'Deep Orbit', item: (parsed.data as PartBOut).bonus }] : []),
+      ];
+      const misfits = items.filter(({ item }) => !itemFitsSubject(item, inp.subject));
+      if (misfits.length) {
+        console.warn(`[abl] part ${which}: off-subject for ${inp.subject}:`, misfits.map((m) => m.label).join(', '));
+        lastErr = misfits
+          .map((m) => `${m.label} is off-subject — it ${misfitReason(m.item, inp.subject)}. Replace it with a real ${inp.subject} item`)
+          .join('; ');
         continue;
       }
       if (which === 'A' && (parsed.data as PartAOut).shorts.every((s) => s.related)) {
