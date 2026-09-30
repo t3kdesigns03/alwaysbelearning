@@ -1,0 +1,9 @@
+---
+import Base from '../../../layouts/Base.astro';
+import Mission from '../../../islands/Mission';
+export const prerender = false;
+const { id = '' } = Astro.params;
+---
+<Base title="Mission">
+  <main class="page"><Mission client:load id={id} /></main>
+</Base>

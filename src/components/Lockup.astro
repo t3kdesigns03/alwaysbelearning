@@ -1,0 +1,9 @@
+---
+interface Props { size?: 'hero' | 'small'; href?: string }
+const { size = 'hero', href } = Astro.props;
+const Tag = href ? 'a' : 'div';
+---
+<Tag class:list={['lockup', size === 'small' && 'small']} href={href} aria-label="ABL — Always Be Learning">
+  <span class="lockup-abl">ABL</span>
+  <span class="lockup-name">Always Be <em>Learning</em></span>
+</Tag>

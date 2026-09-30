@@ -1,0 +1,28 @@
+---
+// Subtle starfield + slow nebula drift. CSS only, generated at build time.
+function stars(count: number, seed: number) {
+  let s = seed;
+  const rnd = () => ((s = (s * 16807) % 2147483647) - 1) / 2147483646;
+  const out: string[] = [];
+  for (let i = 0; i < count; i++) {
+    const x = Math.round(rnd() * 2560);
+    const y = Math.round(rnd() * 2000);
+    const a = (0.35 + rnd() * 0.65).toFixed(2);
+    const tint = rnd() > 0.82 ? `rgb(185 166 255 / ${a})` : `rgb(244 241 255 / ${a})`;
+    out.push(`${x}px ${y}px ${tint}`, `${x}px ${y + 2000}px ${tint}`);
+  }
+  return out.join(',');
+}
+const s1 = stars(220, 7);
+const s2 = stars(90, 101);
+const s3 = stars(34, 4242);
+---
+<div class="sky" aria-hidden="true">
+  <div class="nebula n1"></div>
+  <div class="nebula n2"></div>
+  <div class="nebula n3"></div>
+  <div class="stars stars-1" style={`box-shadow:${s1}`}></div>
+  <div class="stars stars-2" style={`box-shadow:${s2}`}></div>
+  <div class="stars stars-3" style={`box-shadow:${s3}`}></div>
+  <div class="vignette"></div>
+</div>

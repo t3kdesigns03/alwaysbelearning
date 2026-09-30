@@ -1,0 +1,25 @@
+---
+import Base from '../layouts/Base.astro';
+import Lockup from '../components/Lockup.astro';
+import Dock from '../islands/Dock';
+---
+<Base>
+  <main class="page">
+    <div class="wide stack" style="--stack:0">
+      <section class="splash-hero">
+        <Lockup />
+        <p class="tagline" style="margin-top:22px">Stay in orbit — then leave it.</p>
+      </section>
+
+      <section style="margin-top:clamp(40px,9vh,96px)">
+        <p class="enter" style="margin-bottom:16px">Enter the system</p>
+        <Dock client:load />
+      </section>
+
+      <footer class="footer-line" style="margin-top:56px">
+        <span>Crew · Booty · JO · Dad</span>
+        <span>T3KDesigns</span>
+      </footer>
+    </div>
+  </main>
+</Base>

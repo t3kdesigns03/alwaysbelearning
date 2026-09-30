@@ -1,0 +1,9 @@
+---
+import Base from '../../../layouts/Base.astro';
+import Debrief from '../../../islands/Debrief';
+export const prerender = false;
+const { id = '' } = Astro.params;
+---
+<Base title="Debrief">
+  <main class="page"><Debrief client:load id={id} /></main>
+</Base>

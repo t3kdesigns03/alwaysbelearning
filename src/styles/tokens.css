@@ -1,0 +1,76 @@
+/* ─────────────────────────────────────────────────────────────
+   ABL design tokens — a studio in the dark (T3KDesigns)
+   ───────────────────────────────────────────────────────────── */
+:root {
+  color-scheme: dark;
+
+  /* Space */
+  --bg-0: #05040c;
+  --bg-1: #0b0720;
+  --bg-2: #120c2e;
+
+  /* Nebula */
+  --lav: #b9a6ff;
+  --violet: #7b5cff;
+  --violet-deep: #4b33c9;
+  --lilac: #e6ddff;
+  --lav-rgb: 185 166 255;
+  --violet-rgb: 123 92 255;
+
+  /* Text */
+  --text: #f4f1ff;
+  --muted: #9b96b0;
+  --faint: #6c6784;
+
+  /* Signals (quiet, never traffic-light) */
+  --clear: #a8f0da;           /* signal clear */
+  --clear-rgb: 168 240 218;
+  --almost: #ffc2b3;          /* almost — here's the missing piece */
+  --almost-rgb: 255 194 179;
+  --gold: #f5dfa8;            /* deep orbit */
+
+  /* Glass */
+  --glass: rgb(22 15 52 / 0.42);
+  --glass-strong: rgb(28 19 66 / 0.62);
+  --glass-hover: rgb(36 25 84 / 0.55);
+  --hair: rgb(var(--lav-rgb) / 0.16);
+  --hair-strong: rgb(var(--lav-rgb) / 0.34);
+  --blur: 18px;
+  --shadow: 0 30px 80px -30px rgb(0 0 0 / 0.7), 0 0 0 1px var(--hair) inset;
+  --glow: 0 0 0 1px rgb(var(--lav-rgb) / 0.3) inset, 0 12px 50px -12px rgb(var(--violet-rgb) / 0.55);
+
+  /* Shape */
+  --r-sm: 14px;
+  --r: 20px;
+  --r-lg: 24px;
+  --r-xl: 32px;
+  --pill: 999px;
+  --tap: 52px;                /* ≥ 48px targets */
+
+  /* Type */
+  --font: 'Geist', 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'Geist Mono', ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, monospace;
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-md: 1rem;
+  --fs-lg: 1.1875rem;
+  --fs-xl: clamp(1.5rem, 1.2rem + 1.4vw, 2rem);
+  --fs-2xl: clamp(2rem, 1.4rem + 3vw, 3.25rem);
+  --fs-hero: clamp(2.75rem, 1.6rem + 6vw, 6.25rem);
+  --track-wide: 0.22em;
+
+  /* Motion — 200–400ms ease-out */
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --t-fast: 200ms;
+  --t: 280ms;
+  --t-slow: 400ms;
+
+  /* Layout */
+  --gutter: clamp(18px, 4.5vw, 40px);
+  --col: 560px;
+  --wide: 1120px;
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+}

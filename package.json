@@ -1,0 +1,29 @@
+{
+  "name": "always-be-learning",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "ABL — Always Be Learning. A private daily practice system for the crew.",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "seed": "node --env-file-if-exists=.env scripts/seed.mjs"
+  },
+  "dependencies": {
+    "@astrojs/netlify": "^6.5.13",
+    "@astrojs/preact": "^6.0.5",
+    "@supabase/supabase-js": "^2.117.2",
+    "astro": "^7.3.5",
+    "preact": "^10.29.8",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "typescript": "^6.0.3"
+  }
+}
